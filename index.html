@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+</head>
+<body>
+<title>Pointer — it shows you, it never clicks</title>
+<style>
+  :root{
+    --ground:#eef2f1; --surface:#ffffff; --surface-2:#f6f8f7;
+    --ink:#12201e; --ink-soft:#47534f; --ink-faint:#7f8b87;
+    --accent:#0c8a86; --accent-strong:#086b68; --accent-tint:#d7ecea;
+    --rule:#d9e0dd; --shadow:rgba(18,32,30,.10);
+    --p1:#12ab9f; --p2:#2f6bff; --p3:#7a52ff; --p4:#ff5f9e; --p5:#ff9a2e;
+    --display:ui-rounded,"SF Pro Rounded",system-ui,sans-serif;
+    --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#0b1211; --surface:#121b19; --surface-2:#0f1716;
+      --ink:#eef3f1; --ink-soft:#aab4b0; --ink-faint:#6f7a77;
+      --accent:#41d3cb; --accent-strong:#6fe4dd; --accent-tint:#123230;
+      --rule:#22302d; --shadow:rgba(0,0,0,.45);
+      --p1:#3fd0c9; --p2:#5b8bff; --p3:#9d7cff; --p4:#ff7fb2; --p5:#ffb14e;
+    }
+  }
+  :root[data-theme="light"]{
+    --ground:#eef2f1; --surface:#ffffff; --surface-2:#f6f8f7;
+    --ink:#12201e; --ink-soft:#47534f; --ink-faint:#7f8b87;
+    --accent:#0c8a86; --accent-strong:#086b68; --accent-tint:#d7ecea;
+    --rule:#d9e0dd; --shadow:rgba(18,32,30,.10);
+    --p1:#12ab9f; --p2:#2f6bff; --p3:#7a52ff; --p4:#ff5f9e; --p5:#ff9a2e;
+  }
+  :root[data-theme="dark"]{
+    --ground:#0b1211; --surface:#121b19; --surface-2:#0f1716;
+    --ink:#eef3f1; --ink-soft:#aab4b0; --ink-faint:#6f7a77;
+    --accent:#41d3cb; --accent-strong:#6fe4dd; --accent-tint:#123230;
+    --rule:#22302d; --shadow:rgba(0,0,0,.45);
+    --p1:#3fd0c9; --p2:#5b8bff; --p3:#9d7cff; --p4:#ff7fb2; --p5:#ffb14e;
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);
+    font-family:var(--serif);font-size:19px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .wrap{max-width:860px;margin:0 auto;padding:0 24px}
+
+  a{color:var(--accent-strong);text-underline-offset:2px}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-faint)}
+
+  /* hero */
+  header{padding:64px 0 28px}
+  .brandrow{display:flex;align-items:center;gap:11px;margin-bottom:34px}
+  .glyph{width:26px;height:26px;flex:none}
+  .brand{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-.01em}
+  h1{font-family:var(--display);font-weight:800;
+    font-size:clamp(40px,7.4vw,74px);line-height:.98;letter-spacing:-.03em;
+    margin:0 0 20px;text-wrap:balance}
+  h1 .soft{color:var(--ink-faint)}
+  .lede{font-size:clamp(19px,2.4vw,22px);color:var(--ink-soft);max-width:34ch;margin:0}
+
+  /* live demo */
+  .stage{position:relative;margin:34px 0 8px;border:1px solid var(--rule);
+    border-radius:20px;background:
+      radial-gradient(120% 90% at 78% 20%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 60%),
+      var(--surface);
+    box-shadow:0 20px 50px -30px var(--shadow);overflow:hidden}
+  canvas{display:block;width:100%;height:300px}
+  .stage-cap{position:absolute;left:18px;bottom:14px;font-family:var(--mono);
+    font-size:11px;letter-spacing:.06em;color:var(--ink-faint)}
+
+  /* CTA */
+  .cta{display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin:26px 0 10px}
+  .btn{display:inline-flex;align-items:center;gap:10px;
+    font-family:var(--display);font-weight:700;font-size:17px;
+    background:var(--accent);color:#fff;border:0;border-radius:13px;
+    padding:14px 22px;text-decoration:none;cursor:pointer;
+    box-shadow:0 10px 24px -12px color-mix(in srgb, var(--accent) 80%, black);
+    transition:transform .15s ease, box-shadow .15s ease}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 16px 30px -12px color-mix(in srgb, var(--accent) 80%, black)}
+  .btn:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+  .btn svg{width:18px;height:18px}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--ink-faint);letter-spacing:.03em}
+
+  /* sections */
+  section{padding:56px 0;border-top:1px solid var(--rule)}
+  h2{font-family:var(--display);font-weight:800;font-size:clamp(26px,4vw,34px);
+    letter-spacing:-.02em;line-height:1.08;margin:0 0 8px;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0 0 30px;max-width:52ch}
+
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .card{background:var(--surface);border:1px solid var(--rule);border-radius:16px;
+    padding:22px 22px 24px}
+  .card h3{font-family:var(--display);font-weight:700;font-size:19px;
+    letter-spacing:-.01em;margin:14px 0 6px}
+  .card p{font-size:17px;color:var(--ink-soft);margin:0}
+  .chip{display:inline-flex;align-items:center;justify-content:center;
+    width:38px;height:38px;border-radius:11px;background:var(--accent-tint)}
+  .chip svg{width:20px;height:20px;color:var(--accent-strong)}
+  .dotset{display:flex;gap:5px}
+  .dotset i{width:8px;height:8px;border-radius:50%;display:block}
+
+  /* steps — a real sequence, so numbered */
+  ol.steps{list-style:none;counter-reset:s;margin:0;padding:0;display:grid;gap:18px}
+  ol.steps li{counter-increment:s;display:grid;grid-template-columns:34px 1fr;
+    gap:16px;align-items:start}
+  ol.steps li::before{content:counter(s);font-family:var(--mono);font-weight:700;
+    font-size:13px;color:var(--accent-strong);background:var(--accent-tint);
+    width:30px;height:30px;border-radius:9px;display:grid;place-items:center}
+  ol.steps p{margin:0}
+  ol.steps b{font-family:var(--display);font-weight:700}
+
+  /* setup callout */
+  .note{background:var(--surface-2);border:1px solid var(--rule);border-radius:18px;
+    padding:26px 26px 28px}
+  .note .eyebrow{color:var(--accent-strong)}
+  .note h2{margin-top:8px}
+  .note ol{margin:0;padding-left:0;list-style:none;display:grid;gap:16px}
+  .note li{display:grid;grid-template-columns:26px 1fr;gap:13px}
+  .note li .n{font-family:var(--mono);color:var(--accent-strong);font-weight:700;font-size:13px;padding-top:2px}
+  code,kbd{font-family:var(--mono);font-size:.86em}
+  code{background:color-mix(in srgb, var(--accent) 12%, transparent);
+    padding:2px 7px;border-radius:6px;color:var(--ink)}
+  kbd{background:var(--surface);border:1px solid var(--rule);border-bottom-width:2px;
+    border-radius:6px;padding:1px 6px;color:var(--ink)}
+  .req{font-family:var(--mono);font-size:12px;color:var(--ink-faint);margin-top:20px;letter-spacing:.03em}
+
+  footer{padding:44px 0 72px;border-top:1px solid var(--rule);
+    display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between}
+  footer .made{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-faint)}
+
+  @media (max-width:640px){
+    body{font-size:18px}
+    .cards{grid-template-columns:1fr}
+    canvas{height:240px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .btn{transition:none}
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="brandrow">
+      <svg class="glyph" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <rect x="3" y="3" width="26" height="26" rx="8" stroke="var(--accent)" stroke-width="2.4"/>
+        <path d="M12 12.5 L20.5 16 L16.4 17.2 L15.2 21.2 Z" fill="var(--accent)"/>
+      </svg>
+      <span class="brand">Pointer</span>
+      <span class="eyebrow" style="margin-left:auto">Local Mac app · macOS 14.2+</span>
+    </div>
+
+    <h1>It shows you.<br><span class="soft">It never clicks.</span></h1>
+    <p class="lede">A little companion that watches your screen and points at whatever you're
+      looking for — so you do it yourself, and actually learn it.</p>
+
+    <div class="stage">
+      <canvas id="demo" aria-label="Animated demo: a cursor moves with a comet trail, listens with orbiting dots, thinks with a spinning ring, then highlights a control."></canvas>
+      <div class="stage-cap" id="cap">watching…</div>
+    </div>
+
+    <div class="cta">
+      <a class="btn" id="dl" href="https://github.com/hassanjkhan/pointer-releases/releases/download/v0.1/Pointer.dmg" download>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Download for Mac
+      </a>
+      <span class="meta">Pointer&nbsp;0.1 · 137&nbsp;MB · Apple&nbsp;Silicon</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>What it actually does</h2>
+    <p class="sub">Ask where something is — out loud or by typing — and Pointer highlights the
+      real control and explains it. Then you click it. It has no hands of its own.</p>
+
+    <div class="cards">
+      <div class="card">
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v6m0 0 3-3m-3 3L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="15" r="6" stroke="currentColor" stroke-width="2"/></svg></span>
+        <h3>Points, never clicks</h3>
+        <p>It highlights the button and tells you about it. It literally can't click, type, or run
+          anything — the safest assistant you'll meet.</p>
+      </div>
+      <div class="card">
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 5 6v5c0 4.4 3 8 7 9 4-1 7-4.6 7-9V6l-7-3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+        <h3>Stays on your Mac</h3>
+        <p>Fully offline. Your screen never leaves the device — no account, no cloud, no telemetry.
+          Free, too.</p>
+      </div>
+      <div class="card">
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none"><rect x="9" y="3" width="6" height="11" rx="3" stroke="currentColor" stroke-width="2"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+        <h3>Ask out loud or type</h3>
+        <p>Hold either <kbd>⌥ Option</kbd> and speak, or press <kbd>⌥⌘Space</kbd> to type. It
+          transcribes on-device and answers by voice.</p>
+      </div>
+      <div class="card">
+        <span class="chip"><span class="dotset"><i style="background:var(--p1)"></i><i style="background:var(--p3)"></i><i style="background:var(--p4)"></i></span></span>
+        <h3>A cursor that's clearly alive</h3>
+        <p>A comet trail as you move, orbiting dots while it listens, a spinning ring while it
+          thinks. You always know it's on.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>How it pulls it off</h2>
+    <p class="sub">No screenshots-and-guessing. Pointer reads the labels macOS already hands to
+      assistive tech, so a small local model can just pick the right one.</p>
+    <ol class="steps">
+      <li><p><b>Reads the accessibility tree.</b> Every native app publishes its buttons and menus
+        with real names — Pointer reads that, not pixels.</p></li>
+      <li><p><b>A small local model picks the control</b> you meant, from a plain list of names.
+        That's why it's fast and works offline.</p></li>
+      <li><p><b>It highlights and speaks.</b> You move your own hand to it and do the thing —
+        which is how you remember it next time.</p></li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="note">
+      <div class="eyebrow">Read me before you open it</div>
+      <h2>Two one-time setup steps</h2>
+      <p class="sub" style="margin-bottom:22px">This is an early build shared with friends, so it
+        skips the App Store polish. Five honest minutes and you're in.</p>
+      <ol>
+        <li><span class="n">1</span><p><b>Let macOS open it.</b> It isn't notarized yet, so you'll
+          see an “unidentified developer” warning. Right-click <b>Pointer</b> → <b>Open</b> →
+          <b>Open</b>. (Or run <code>xattr -cr /Applications/Pointer.app</code> once.)</p></li>
+        <li><span class="n">2</span><p><b>Give it a local brain.</b> Pointer thinks with a model
+          that runs on your Mac. Install <a href="https://ollama.com">Ollama</a>, then run
+          <code>ollama pull qwen3:8b</code> and keep Ollama running. Without it, asks say
+          “Model unavailable.” (The voice model is already bundled.)</p></li>
+      </ol>
+      <p class="req">Requires macOS 14.2 or later · Apple Silicon recommended · grant Accessibility when it asks.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span class="made">Made with care · fully local · no clicks were performed</span>
+    <a class="btn" href="https://github.com/hassanjkhan/pointer-releases/releases/download/v0.1/Pointer.dmg" download>
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Download for Mac
+    </a>
+  </footer>
+
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('demo');
+  const cap = document.getElementById('cap');
+  const ctx = canvas.getContext('2d');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const palette = () => ['--p1','--p2','--p3','--p4','--p5'].map(css);
+
+  let W = 0, H = 0, dpr = 1;
+  function resize(){
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    const r = canvas.getBoundingClientRect();
+    W = r.width; H = r.height;
+    canvas.width = Math.round(W*dpr); canvas.height = Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  new ResizeObserver(resize).observe(canvas); resize();
+
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const easeIO=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  const start=()=>({x:W*0.16,y:H*0.62});
+  const target=()=>({x:W*0.72,y:H*0.40});
+
+  const phases=[['move',3400,'watching…'],['listen',2200,'listening…'],['think',1600,'thinking…'],['talk',3400,'“it’s right here →”']];
+  const total=phases.reduce((a,p)=>a+p[1],0);
+  let trail=[];
+
+  function dot(x,y,r,color,alpha=1){ ctx.globalAlpha=alpha; ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); ctx.globalAlpha=1; }
+  function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  function chip(x,y,text){
+    ctx.font='600 13px '+"ui-rounded, -apple-system, system-ui, sans-serif";
+    const w=ctx.measureText(text).width+26, h=28;
+    ctx.fillStyle=css('--ink'); ctx.globalAlpha=.92;
+    roundRect(x-w/2,y-h/2,w,h,14); ctx.fill(); ctx.globalAlpha=1;
+    ctx.fillStyle=css('--ground'); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(text,x,y+.5);
+    ctx.textAlign='start';
+  }
+
+  let t0=null;
+  function frame(now){
+    if(t0===null) t0=now;
+    let e=(now-t0)%total, name='move', u=0;
+    for(const p of phases){ if(e<p[1]){ name=p[0]; u=e/p[1]; cap.textContent=p[2]; break; } e-=p[1]; }
+
+    ctx.clearRect(0,0,W,H);
+    const s=start(), tg=target(), pal=palette(), accent=css('--accent');
+
+    // cursor position
+    let cx=tg.x, cy=tg.y;
+    if(name==='move'){
+      const t=easeIO(u), mx=(s.x+tg.x)/2, my=Math.min(s.y,tg.y)-H*0.22;
+      cx=lerp(lerp(s.x,mx,t),lerp(mx,tg.x,t),t);
+      cy=lerp(lerp(s.y,my,t),lerp(my,tg.y,t),t);
+      trail.push({x:cx,y:cy}); if(trail.length>26) trail.shift();
+    } else if(trail.length){ trail.shift(); }
+
+    // comet trail
+    for(let i=0;i<trail.length;i++){
+      const t=i/(trail.length-1||1), p=trail[i];
+      dot(p.x,p.y,2+t*5,pal[i%pal.length],0.12+t*0.7);
+    }
+
+    if(name==='move'){
+      dot(cx,cy,4,accent);
+    }
+
+    if(name==='listen'){
+      const R=15+Math.sin(now/150)*6;
+      for(let i=0;i<pal.length;i++){ const a=now/380+i/pal.length*6.283; dot(cx+Math.cos(a)*R, cy+Math.sin(a)*R, 4.2, pal[i]); }
+      chip(cx, cy-46, 'Listening…');
+    }
+
+    if(name==='think'){
+      ctx.lineWidth=5; ctx.lineCap='round';
+      for(let i=0;i<pal.length;i++){ const a0=now/260+i/pal.length*6.283, a1=a0+6.283/pal.length*0.7;
+        ctx.strokeStyle=pal[i]; ctx.beginPath(); ctx.arc(cx,cy,20,a0,a1); ctx.stroke(); }
+      chip(cx, cy-48, 'Thinking…');
+    }
+
+    if(name==='talk'){
+      const bx=cx-6, by=cy-2, bw=118, bh=40;   // a faux "Export" control
+      const app=Math.min(1,u/0.18);
+      ctx.save(); ctx.globalAlpha=app;
+      // halo
+      ctx.strokeStyle=accent; ctx.lineWidth=2.2;
+      ctx.shadowColor=accent; ctx.shadowBlur=14;
+      roundRect(bx,by,bw,bh,10); ctx.stroke();
+      ctx.shadowBlur=0;
+      // label inside
+      ctx.fillStyle=css('--ink'); ctx.globalAlpha=app*0.75;
+      ctx.font='600 14px ui-rounded, system-ui, sans-serif';
+      ctx.textBaseline='middle'; ctx.fillText('Export…', bx+16, by+bh/2);
+      ctx.restore();
+      chip(bx+bw/2, by+bh+26, 'It’s right here →');
+      // small resting comet dot
+      dot(cx,cy, 3, accent, 0.5);
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  if(reduce){
+    // static, friendly frame: a short comet toward a highlighted control
+    resize();
+    const s=start(), tg=target(), pal=palette(), accent=css('--accent');
+    for(let i=0;i<10;i++){ const t=i/9; dot(lerp(s.x,tg.x,t),lerp(s.y,tg.y,t),2+t*4,pal[i%pal.length],0.15+t*0.7); }
+    ctx.strokeStyle=accent; ctx.lineWidth=2.2; roundRect(tg.x-6,tg.y-2,118,40,10); ctx.stroke();
+    cap.textContent='it shows you where';
+  } else {
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+
+</body>
+</html>
